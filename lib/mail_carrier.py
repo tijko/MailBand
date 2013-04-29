@@ -31,59 +31,55 @@ _ports = {'pop.gmail.com':995,
          }
 
 
-class Carrier(object):
-    
-    @classmethod
-    def deliver(self, address, action): 
-        for addr in address:
-            accnt_name, server_suffix = addr[0].split('@')
-            server = _pop_addr[server_suffix]
-            session = poplib.POP3_SSL(server)
-            try:
-                if server_suffix == 'gmail.com':
-                    session.user(accnt_name)
-                    session.pass_(addr[1])
+def deliver(address, action): 
+    for addr in address:
+        accnt_name, server_suffix = addr[0].split('@')
+        server = _pop_addr[server_suffix]
+        session = poplib.POP3_SSL(server)
+        try:
+            if server_suffix == 'gmail.com':
+                session.user(accnt_name)
+                session.pass_(addr[1])
+            else:
+                session.user(addr[0])
+                session.pass_(addr[1])            
+            # give option of, say 10 newest or 10 oldest?
+            print 'Emails %d for: %s' % (session.stat()[0], addr[0])
+            if session.stat()[0] < 1:
+                break
+            for i in xrange(1, session.stat()[0] + 1):
+                email = session.top(i, 30000)[1]   
+                soup = BeautifulSoup(' '.join(email))
+                msg = soup.text
+                front = msg.find('From: ')
+                back = msg.find('Content-Type:')
+                if back == -1 or back < front or back > front + 101:
+                    back = front + 100
+                title = title_parse(msg[front:back])
+                if title:
+                    print '\n[%d]    %s' % (i, title)
                 else:
-                    session.user(addr[0])
-                    session.pass_(addr[1])            
-                # give option of, say 10 newest or 10 oldest?
-                print 'Emails %d for: %s' % (session.stat()[0], addr[0])
-                if session.stat()[0] < 1:
-                    break
-                for i in xrange(1, session.stat()[0] + 1):
-                    email = session.top(i, 30000)[1]   
-                    soup = BeautifulSoup(' '.join(email))
-                    msg = soup.text
-                    front = msg.find('From: ')
-                    back = msg.find('Content-Type:')
-                    if back == -1 or back < front or back > front + 101:
-                        back = front + 100
-                    title = self.title_parse(msg[front:back])
-                    if title:
-                        print '\n[%d]    %s' % (i, title)
-                    else:
-                        pass
-                selection = raw_input('\nSelect your e-mail numbers: ')
-                if action == 'write':
-                    self.save_local(session, addr[0], selection.split(','))
-                    print '\nMail saved!\n'
-                if action == 'read':
-                    self.read_account_mail(session, selection.split(','))
-                if action == 'delete':
-                    self.delete_account_mail(session, selection.split(','))
-                session.quit()                               
-            except poplib.error_proto:
-                print '\nUsername or Password Error ==> %s\n' % addr[0]
-                pass
-        return
+                    pass
+            selection = raw_input('\nSelect your e-mail numbers: ')
+            if action == 'write':
+                save_local(session, addr[0], selection.split(','))
+            if action == 'read':
+                read_account_mail(session, selection.split(','))
+            if action == 'delete':
+                delete_account_mail(session, selection.split(','))
+            session.quit()                               
+        except poplib.error_proto:
+            print '\nUsername or Password Error ==> %s\n' % addr[0]
+            pass
+    return
 
-    @classmethod
-    def save_local(self, session, account, selection):
-        if not os.path.isfile(os.environ['HOME'] + '/.mailband.db'):
-            self.create_database()
-        con = sqlite3.connect(os.environ['HOME'] + '/.mailband.db')
-        with con:
-            for email in selection:
+def save_local(session, account, selection):
+    if not os.path.isfile(os.environ['HOME'] + '/.mailband.db'):
+        create_database()
+    con = sqlite3.connect(os.environ['HOME'] + '/.mailband.db')
+    with con:
+        for email in selection:
+            try:
                 cur = con.cursor()
                 cur.execute("SELECT * FROM Email")
                 num_mail = len(cur.fetchall()) + 1
@@ -98,52 +94,60 @@ class Carrier(object):
                 email_body = session.retr(email)[1]
                 email_body = ' '.join(email_body)
                 cur.execute("INSERT INTO Email VALUES(?,?,?,?)", (num_mail,
-                                                                account,
-                                                                title,
-                                                                email_body))
-        con.commit()
-        con.close()
-        return                
+                                                                  account,
+                                                                  title,
+                                                                  email_body))
+                print '\nMessage %s saved!' % mail
+            except poplib.error_proto:
+                print '\nBad Selection! --> %s\n' % email
+                pass 
+    con.commit()
+    con.close()
+    return                
 
-    @classmethod
-    def read_account_mail(self, session, selection):
-        for email in selection:
+def read_account_mail(session, selection):
+    for email in selection:
+        try:
             email_body = session.retr(email)
             soup = BeautifulSoup(' '.join(email_body[1]))
-            print "Message %s\n" % email
+            print "Message [%s]\n" % email
             print soup.text + '\n'
-        return
+        except poplib.error_proto:
+            print '\nBad Selection! --> %s\n' % email
+            pass
+    return
 
-    @classmethod    
-    def delete_account_mail(self, session, selection):
-        print "\nAre you sure you want to DELETE messages ==> %s" % (str(selection))
-        while True:
-            answer = raw_input("(y or n): ") 
-            if answer.lower() == 'y' or answer.lower() == 'n':
-                break
-        if answer.lower() == 'y':
-            for email in selection:
+def delete_account_mail(session, selection):
+    print "\nAre you sure you want to DELETE messages ==> %s" % (str(selection))
+    while True:
+        answer = raw_input("(y or n): ") 
+        if answer.lower() == 'y' or answer.lower() == 'n':
+            break
+    if answer.lower() == 'y':
+        for email in selection:
+            try:
                 session.dele(email)
-            print "\nMessages Deleted!\n" 
-        return
+                print '\nMessage Deleted!\n'
+            except poplib.error_proto:
+                print '\nBad Selection! --> %s\n' % email
+                pass
+    return
 
-    @classmethod
-    def title_parse(self, title):
-        title = title.replace('MIME-Version: 1.0', '')
-        title = title.replace('In-Reply-To:', '')
-        title = title.replace('Message-ID:', '')
-        # reference rm?
-        return title
+def title_parse(title):
+    title = title.replace('MIME-Version: 1.0', '')
+    title = title.replace('In-Reply-To:', '')
+    title = title.replace('Message-ID:', '')
+    # reference rm?
+    return title
 
-    @staticmethod
-    def create_database():
-        con = sqlite3.connect(os.environ['HOME'] + '/.mailband.db')
-        with con:
-            cur = con.cursor()
-            cur.execute("""CREATE TABLE IF NOT EXISTS Email(email_id INTEGER,
-                                                            email_account TEXT,
-                                                            email_title TEXT, 
-                                                            email_text TEXT)""")
-        con.commit()
-        con.close()
-        return
+def create_database():
+    con = sqlite3.connect(os.environ['HOME'] + '/.mailband.db')
+    with con:
+        cur = con.cursor()
+        cur.execute("""CREATE TABLE IF NOT EXISTS Email(email_id INTEGER,
+                                                        email_account TEXT,
+                                                        email_title TEXT, 
+                                                        email_text TEXT)""")
+    con.commit()
+    con.close()
+    return

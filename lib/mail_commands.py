@@ -108,10 +108,7 @@ class Mail_Pool(object):
                 for j in show:
                     print "\n[%d] %s" % (j[0], j[2])   
                     print j[3]
+            print '-' * 40
         con.close()
-        print ''
         return
-
-
-
 
