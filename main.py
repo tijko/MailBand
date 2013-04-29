@@ -10,7 +10,7 @@ def options():
     parser = argparse.ArgumentParser(description='''MailBand is an utility to help manage multiple e-mail accounts.  
                                                     MailBand is capable of reading and writing emails from your shell.
                                                     MailBand can back-up all your emails locally on your storage device.  
-                                                    MailBand is compatible with: -hotmail -live -gmail -yahoo -msn''')
+                                                    MailBand is compatible with: -hotmail -live -gmail -aol -msn''')
     p = parser.add_mutually_exclusive_group()
     p.add_argument('-a', '--add_acnt', help='add an e-mail account', action='store_true')
     p.add_argument('-c', '--show_acnts', help='list current email accounts', action='store_true')
