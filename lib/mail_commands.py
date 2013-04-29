@@ -2,7 +2,6 @@
 # -*- coding: UTF-8 -*-
 
 import simplejson
-from mail_carrier import Carrier
 import sqlite3
 import os
 
