@@ -3,7 +3,7 @@
 
 import argparse
 from lib.mail_commands import Mail_Pool
-from lib.mail_carrier import Carrier
+from lib.mail_carrier import deliver 
 
 
 def options():
@@ -35,13 +35,13 @@ def main(opt):
     else:
         choices = pool.mail_box()
         if opt.read:
-            Carrier.deliver(choices, 'read')
+            deliver(choices, 'read')
         if opt.delete:
-            Carrier.deliver(choices, 'delete')
+            deliver(choices, 'delete')
         if opt.send:
             return
         if opt.write:
-            Carrier.deliver(choices, 'write')
+            deliver(choices, 'write')
         if opt.fetch_stored:
             pool.fetch_stored(choices)
         if opt.delete_stored:
