@@ -28,9 +28,9 @@ def main(opt):
     pool = Mail_Pool()
     if opt.add_acnt:
         pool.add_account()
-    if opt.remove_acnt:
+    elif opt.remove_acnt:
         pool.remove_account()
-    if opt.show_acnts:
+    elif opt.show_acnts:
         pool.show_current_accounts()
     else:
         choices = pool.mail_box()
