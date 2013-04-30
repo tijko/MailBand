@@ -39,7 +39,7 @@ def main(opt):
         if opt.delete:
             deliver(choices, 'delete')
         if opt.send:
-            return
+            pool.send_mail(choices)
         if opt.write:
             deliver(choices, 'write')
         if opt.fetch_stored:
