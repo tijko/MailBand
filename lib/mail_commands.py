@@ -3,15 +3,17 @@
 
 import simplejson
 import sqlite3
+import smtplib
 import os
 
 
-_pop_addr = {'gmail.com':'pop.gmail.com',
-             'msn.com':'pop3.live.com',
-             'hotmail.com':'pop3.live.com',
-             'live.com':'pop3.live.com',
-             'aol.com':'pop.aol.com'
-            }
+_ports = {'pop.gmail.com':995,
+          'smtp.gmail.com':587,
+          'pop3.live.com':995,
+          'smtp.live.com':587,
+          'pop.aol.com':995,
+          'smtp.aol.com':587
+         }
 
 _smtp_addr = {'gmail.com':'smtp.gmail.com',
               'msn.com':'smtp.email.live.com',
@@ -88,7 +90,19 @@ class Mail_Pool(object):
     def delete_stored(self):
         return
 
-    def send_mail(self):
+    def send_mail(self, boxes):
+        for box in boxes:
+            addr = box[0].split('@')[1]
+            mail_server = _smtp_addr[addr]
+            server = smtplib.SMTP(mail_server, _ports[mail_server])
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(box[0], box[1])
+            to = raw_input('\nTo: ')
+            msg = raw_input('\nEnter message: ')
+            server.sendmail(box[0], to, msg)
+            print '\nMessage Sent!\n'
         return
 
     def fetch_stored(self, choices):
