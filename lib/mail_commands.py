@@ -50,7 +50,7 @@ class Mail_Pool(object):
 
     def add_account(self):
         acc_name = raw_input("\nEnter a valid e-mail address: ")
-        if '@' not in acc_name or not _pop_addr.get(acc_name.split('@')[1]):
+        if '@' not in acc_name or not _smtp_addr.get(acc_name.split('@')[1]):
             print '\nInvalid e-mail account!'
             print '\nMailBand is compatible with:'
             print '    --hotmail\n    --gmail\n    --live\n    --aol\n    --msn\n'   
@@ -69,8 +69,9 @@ class Mail_Pool(object):
             print '      example: --> 1,3'
             acnt_name = raw_input("\nSelect the accounts you want to remove: ")
             for acnt in list(enumerate(self.stored_acnts.keys(), 1)):
-                if str(acnt[0]) in acnt_name:
+                if str(acnt[0]) in acnt_name.split(','):
                     self.stored_acnts.pop(acnt[1])
+                # iterate over acnt_name instead of acnt
             with open(self.home_dir + '/.mailband_accounts.txt', 'w') as f:
                 f.write(simplejson.dumps(self.stored_acnts))
             self.show_current_accounts()
@@ -85,9 +86,6 @@ class Mail_Pool(object):
             print ''
         else:
             print "\nYou don't have any accounts saved!\n"
-        return
-
-    def delete_stored(self):
         return
 
     def send_mail(self, boxes):
@@ -115,14 +113,39 @@ class Mail_Pool(object):
             for i in choices:
                 cur.execute('SELECT * FROM Email WHERE email_account=?', [i[0]])
                 emails = cur.fetchall()    
-                for email in emails:
-                    print "\n    [%d] %s" % (email[0], email[2])
-                read_choice = raw_input("\nSelect the emails to display: ")
-                show = [v for v in emails if str(v[0]) in read_choice.split(',')]
-                for j in show:
-                    print "\n[%d] %s" % (j[0], j[2])   
-                    print j[3]
+                if emails:
+                    email_list = zip(range(1, len(emails) + 1), [email[1] for email in emails])
+                    for email in email_list:
+                        print "\n    [%d] %s" % (email[0], email[1])
+                    read_choice = raw_input("\nSelect the emails to display: ")
+                    show = [v for v in email_list if str(v[0]) in read_choice.split(',')]
+                    for j in show:
+                        for e in emails:
+                            if j[1] in e:
+                                print "\n[%d] %s" % (j[0], j[1])   
+                                print e[2]
             print '-' * 40
         con.close()
         return
 
+    def delete_stored(self, choices):
+        if not os.path.isfile(os.environ['HOME'] + '/.mailband.db'):
+            print '\nNo mail saved!\n'
+            return
+        con = sqlite3.connect(os.environ['HOME'] + '/.mailband.db')
+        with con:
+            cur = con.cursor()
+            for i in choices:
+                cur.execute('SELECT * FROM Email WHERE email_account=?', [i[0]])
+                emails = cur.fetchall()
+                if emails:
+                    email_list = zip(range(1, len(emails) + 1), [email[1] for email in emails])
+                    for email in email_list:                        
+                        print "\n    [%d] %s" % (email[0], email[1])
+                    delete_choice = raw_input("\nSelect the emails to delete: ")
+                    for email in email_list:
+                        if str(email[0]) in delete_choice.split(','):
+                            cur.execute('DELETE FROM Email WHERE email_title=?', [email[1]])
+        con.commit()
+        con.close()                
+        return

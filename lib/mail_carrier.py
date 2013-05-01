@@ -45,6 +45,7 @@ def deliver(address, action):
                     else:
                         pass
                 selection = raw_input('\nSelect your e-mail numbers: ')
+                # check if all are numbers
                 if action == 'write':
                     save_local(session, addr[0], selection.split(','))
                 if action == 'read':
@@ -66,7 +67,6 @@ def save_local(session, account, selection):
             try:
                 cur = con.cursor()
                 cur.execute("SELECT * FROM Email")
-                num_mail = len(cur.fetchall()) + 1
                 mail = session.top(email, 10000)[1]
                 soup = BeautifulSoup(' '.join(mail))
                 msg = soup.text
@@ -74,14 +74,13 @@ def save_local(session, account, selection):
                 back = msg.find('Content-Type:')
                 if back == -1 or back < front or back > front + 101:
                     back = front + 100
-                title = self.title_parse(msg[front:back])
+                title = title_parse(msg[front:back])
                 email_body = session.retr(email)[1]
                 email_body = ' '.join(email_body)
-                cur.execute("INSERT INTO Email VALUES(?,?,?,?)", (num_mail,
-                                                                  account,
-                                                                  title,
-                                                                  email_body))
-                print '\nMessage %s saved!' % mail
+                cur.execute("INSERT INTO Email VALUES(?,?,?)", (account,
+                                                                title,
+                                                                email_body))
+                print '\nMessage %s saved!' % title 
             except poplib.error_proto:
                 print '\nBad Selection! --> %s\n' % email
                 pass 
@@ -128,8 +127,7 @@ def create_database():
     con = sqlite3.connect(os.environ['HOME'] + '/.mailband.db')
     with con:
         cur = con.cursor()
-        cur.execute("""CREATE TABLE IF NOT EXISTS Email(email_id INTEGER,
-                                                        email_account TEXT,
+        cur.execute("""CREATE TABLE IF NOT EXISTS Email(email_account TEXT,
                                                         email_title TEXT, 
                                                         email_text TEXT)""")
     con.commit()
