@@ -38,14 +38,14 @@ def main(opt):
             deliver(choices, 'read')
         if opt.delete:
             deliver(choices, 'delete')
-        if opt.send:
-            pool.send_mail(choices)
         if opt.write:
             deliver(choices, 'write')
+        if opt.send:
+            pool.send_mail(choices)
         if opt.fetch_stored:
             pool.fetch_stored(choices)
         if opt.delete_stored:
-            return
+            pool.delete_stored(choices)
 
 if __name__ == '__main__':
     opt = options()
