@@ -2,7 +2,7 @@ MailBand
 ========
 
 MailBand is an email utility to help manage multiple accounts.  It is able to 
-read and write emails from your desktop.  You can also back-up all of your
+read and write emails from your desktop and you can also back-up all of your
 emails into a database stored on your local device.
 
 MailBand is compatible with: hotmail, live, gmail, msn, aol.
