@@ -68,10 +68,9 @@ class Mail_Pool(object):
             print '    If you want more than one account selected, separate choices by commas.'
             print '      example: --> 1,3'
             acnt_name = raw_input("\nSelect the accounts you want to remove: ")
-            for acnt in acnt_name.split(','):     
-                for acnt_key in list(enumerate(self.stored_acnts.keys(), 1)):
-                    if acnt == str(acnt_key[0]):
-                        self.stored_acnts.pop(acnt_key[1])
+            for acnt_key in list(enumerate(self.stored_acnts.keys(), 1)):
+                if str(acnt_key[0]) in acnt_name.split(','):
+                    self.stored_acnts.pop(acnt_key[1])
             with open(self.home_dir + '/.mailband_accounts.txt', 'w') as f:
                 f.write(simplejson.dumps(self.stored_acnts))
             self.show_current_accounts()
