@@ -85,7 +85,7 @@ class Mail_Pool(object):
             print ''
         else:
             print "\nYou don't have any accounts saved!\n"
-        return
+            return
 
     def send_mail(self, boxes):
         for box in boxes:
