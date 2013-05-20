@@ -46,7 +46,7 @@ class Mail_Pool(object):
             if not accounts:
                 print '\nBad Selection!\n'
                 return
-        return accounts
+            return accounts
 
     def add_account(self):
         acc_name = raw_input("\nEnter a valid e-mail address: ")
