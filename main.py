@@ -34,18 +34,19 @@ def main(opt):
         pool.show_current_accounts()
     else:
         choices = pool.mail_box()
-        if opt.read:
-            deliver(choices, 'read')
-        if opt.delete:
-            deliver(choices, 'delete')
-        if opt.write:
-            deliver(choices, 'write')
-        if opt.send:
-            pool.send_mail(choices)
-        if opt.fetch_stored:
-            pool.fetch_stored(choices)
-        if opt.delete_stored:
-            pool.delete_stored(choices)
+        if choices:
+            if opt.read:
+                deliver(choices, 'read')
+            if opt.delete:
+                deliver(choices, 'delete')
+            if opt.write:
+                deliver(choices, 'write')
+            if opt.send:
+                pool.send_mail(choices)
+            if opt.fetch_stored:
+                pool.fetch_stored(choices)
+            if opt.delete_stored:
+                pool.delete_stored(choices)
 
 if __name__ == '__main__':
     opt = options()
