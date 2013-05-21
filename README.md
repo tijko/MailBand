@@ -17,7 +17,7 @@ root can read or write to these.
 You can get a list of options by calling `main.py` in MailBands path with `-h` as an
 option.
 
-    python main.py -h
+    sudo python main.py -h
 
     usage: main.py [-h] [-a | -c | -r | -R | -F | -D | -d | -s | -w]
 
@@ -41,7 +41,7 @@ option.
 
 By using the `-a` argument you can add an email account to the list of saved accounts.
 
-    python main.py -a
+    sudo python main.py -a
 
     Enter a valid e-mail address: foouser@gmail.com
     Now, enter that address' password: foopass
