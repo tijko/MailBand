@@ -10,6 +10,10 @@ If you want it to work with yahoo and lycos these services are about $20/yr.
 
 #### usage
     
+In order to use MailBand, you will need to be running under root access.  The files
+created (accounts file and mail database) will be root-protected, no one other than 
+root can read or write to these.
+
 You can get a list of options by calling `main.py` in MailBands path with `-h` as an
 option.
 
