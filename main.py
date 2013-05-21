@@ -1,7 +1,7 @@
 # !/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
-import argparse
+import argparse, os
 from lib.mail_commands import Mail_Pool
 from lib.mail_carrier import deliver 
 
@@ -49,5 +49,8 @@ def main(opt):
                 pool.delete_stored(choices)
 
 if __name__ == '__main__':
-    opt = options()
-    main(opt)
+    if os.getuid() == 0:
+        opt = options()
+        main(opt)
+    else:
+        print "\n --> MailBand needs root access...\n"
