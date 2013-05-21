@@ -59,6 +59,7 @@ class Mail_Pool(object):
         self.stored_acnts.update({acc_name:passwrd})
         with open(self.home_dir + '/.mailband_accounts.txt', 'w') as f:
             f.write(simplejson.dumps(self.stored_acnts))
+        os.chmod(self.home_dir + '/.mailband_accounts.txt', 111)
         self.show_current_accounts()
         return
 

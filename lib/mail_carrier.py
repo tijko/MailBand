@@ -132,4 +132,5 @@ def create_database():
                                                         email_text TEXT)""")
     con.commit()
     con.close()
+    os.chmod(os.environ['HOME'] + '/.mailband.db', 111)
     return
