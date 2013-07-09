@@ -88,21 +88,6 @@ class Mail_Pool(object):
             print "\nYou don't have any accounts saved!\n"
             return
 
-    def send_mail(self, boxes):
-        for box in boxes:
-            addr = box[0].split('@')[1]
-            mail_server = _smtp_addr[addr]
-            server = smtplib.SMTP(mail_server, _ports[mail_server])
-            server.ehlo()
-            server.starttls()
-            server.ehlo()
-            server.login(box[0], box[1])
-            to = raw_input('\nTo: ')
-            msg = raw_input('\nEnter message: ')
-            server.sendmail(box[0], to, msg)
-            print '\nMessage Sent!\n'
-        return
-
     def fetch_stored(self, choices):
         if not os.path.isfile(os.environ['HOME'] + '/.mailband.db'):
             print '\nNo mail saved!\n'
