@@ -3,6 +3,7 @@
 
 import argparse, os
 from lib.mail_commands import Mail_Pool
+from lib.send_mail import SendMail
 from lib.mail_carrier import deliver 
 
 
@@ -32,6 +33,9 @@ def main(opt):
         pool.remove_account()
     elif opt.show_acnts:
         pool.show_current_accounts()
+    elif opt.send:
+        send_msg = SendMail()
+        send_msg.fetch_acnts()
     else:
         choices = pool.mail_box()
         if choices:
@@ -41,8 +45,6 @@ def main(opt):
                 deliver(choices, 'delete')
             if opt.write:
                 deliver(choices, 'write')
-            if opt.send:
-                pool.send_mail(choices)
             if opt.fetch_stored:
                 pool.fetch_stored(choices)
             if opt.delete_stored:
