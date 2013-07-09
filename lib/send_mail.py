@@ -41,43 +41,34 @@ class SendMail(object):
         self.root.geometry("275x200+400+275")
         frame = LabelFrame(self.root, text="Select Accounts", padx=15, pady=15)
         frame.pack(fill='both', expand=1)
-        self.chk_vars = list()
         self.acnts = [acnt for acnt in acnts.items()]
+        self.sel = IntVar()
         for acnt in self.acnts:       
-            sel = IntVar()
-            box = Checkbutton(frame, text=acnt[0], variable=sel)
+            v = self.acnts.index(acnt)
+            box = Radiobutton(frame, text=acnt[0], value=v, variable=self.sel)
             box.pack(anchor=W)
-            self.chk_vars.append(sel)
-        ok_button = Button(self.root, text='ok', command=self.select_accounts)
+        ok_button = Button(self.root, text='ok', command=self.msg_window)
         ok_button.pack()
         cancel_button = Button(self.root, text='cancel', command=self.cancel)
         cancel_button.pack()
         self.root.mainloop()
-
-    def select_accounts(self):  
-        self.selections = list() 
-        for var in self.chk_vars:
-            if var.get():
-                choice = self.chk_vars.index(var)
-                self.selections.append(self.acnts[choice])
-        self.msg_window    
         
     def mail_session(self, msg):
         self.msg = msg
-        for acnt in self.selections:
-            try:
-                addr = acnt[0].split('@')[1]
-                mail_server = _smtp_addr[addr]
-                server = smtplib.SMTP(mail_server, _ports[mail_server])
-                server.ehlo()
-                server.starttls()
-                server.ehlo()
-                server.login(acnt[0], acnt[1])
-                recipent = self.recipent
-                server.sendmail(acnt[0], recipent, self.msg)
-                server.quit()
-            except:
-                self.msg_fail
+        acnt = self.acnts[self.sel.get()]
+        try:
+            addr = acnt[0].split('@')[1]
+            mail_server = _smtp_addr[addr]
+            server = smtplib.SMTP(mail_server, _ports[mail_server])
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(acnt[0], acnt[1])
+            recipent = self.recipent
+            server.sendmail(acnt[0], recipent, self.msg)
+            server.quit()
+        except:
+            self.msg_fail
 
     def ok_send(self):
         last_line = self.msg_input.index(END)
@@ -92,7 +83,6 @@ class SendMail(object):
     def msg_fail_cancel(self):
         self.fail_root.destroy()
         
-    @property
     def msg_window(self):
         self.cancel()
         self.root = Tk()
