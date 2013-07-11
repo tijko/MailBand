@@ -39,18 +39,21 @@ class SendMail(object):
     def choice_window(self, acnts):
         self.root = Tk()
         self.root.geometry("275x200+400+275")
-        frame = LabelFrame(self.root, text="Select Accounts", padx=15, pady=15)
-        frame.pack(fill='both', expand=1)
+        frame = LabelFrame(self.root, text="Select an Account")
+        frame.grid(row=0, rowspan=2, column=0, columnspan=2, 
+                   padx=5, sticky=N+S+E+W)
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
         self.acnts = [acnt for acnt in acnts.items()]
         self.sel = IntVar()
         for acnt in self.acnts:       
             v = self.acnts.index(acnt)
             box = Radiobutton(frame, text=acnt[0], value=v, variable=self.sel)
-            box.pack(anchor=W)
+            box.grid(row=v, sticky=W, pady=5)
         ok_button = Button(self.root, text='ok', command=self.msg_window)
-        ok_button.pack()
+        ok_button.grid(row=v + 2, column=0, sticky=S+W, padx=25, pady=10)
         cancel_button = Button(self.root, text='cancel', command=self.cancel)
-        cancel_button.pack()
+        cancel_button.grid(row=v + 2, column=1, sticky=S+E, padx=25, pady=10)
         self.root.mainloop()
         
     def mail_session(self, msg):
@@ -73,31 +76,39 @@ class SendMail(object):
     def ok_send(self):
         last_line = self.msg_input.index(END)
         self.msg = self.msg_input.get('1.0', last_line)
-        self.recipent = self.entry.get()
+        self.recipent = self.to.get()
         self.mail_session(self.msg)
-        self.root.destroy()    
 
     def cancel(self):
         self.root.destroy()
 
     def msg_fail_cancel(self):
         self.fail_root.destroy()
+        self.cancel()
         
     def msg_window(self):
         self.cancel()
         self.root = Tk()
-        self.root.geometry("500x400+400+275")
-        self.frame = Frame(self.root, bd=10)
-        self.frame.pack(fill="both", expand=1)
-        self.msg_input = Text(self.frame, wrap=WORD) 
-        self.msg_input.pack(fill="both", expand=1) 
-        self.entry = Entry(self.msg_input)
-        self.entry.pack(fill=X, side=BOTTOM)
+        self.root.geometry("500x475+400+275")
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+        self.msg_input = Text(self.root, wrap=WORD) 
+        self.msg_input.grid(row=2, columnspan=2, sticky=N+S+E+W, padx=10)
+        self.to = Entry(self.root)
+        self.to.grid(row=0, columnspan=2, sticky=W+E, padx=70)
+        self.to_label = Label(self.root, text='To:')
+        self.to_label.grid(row=0, sticky=W, padx=10)
+        self.subject = Entry(self.root)
+        self.subject.grid(row=1, columnspan=2, sticky=W+E, padx=70, pady=10)
+        self.subject_label = Label(self.root, text='Subject:')
+        self.subject_label.grid(row=1, sticky=W, padx=10)
         self.ok_button = Button(self.root, text="ok", command=self.ok_send)
-        self.ok_button.pack()
+        self.ok_button.grid(row=3, sticky=S+W, padx=10, pady=10)
         self.cancel_button = Button(self.root, text="cancel", 
                                           command=self.cancel)
-        self.cancel_button.pack()
+
+        self.cancel_button.grid(row=3, column=1, sticky=S+E, padx=10, pady=10)
+        self.msg_input.focus_set()
         self.root.mainloop()
 
     @property
