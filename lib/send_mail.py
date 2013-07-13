@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from Tkinter import *
+from email.mime.text import MIMEText
 import os
 import smtplib
 import simplejson
@@ -57,6 +58,8 @@ class SendMail(object):
         self.root.mainloop()
         
     def mail_session(self, msg):
+        msg = MIMEText(msg)
+        msg['Subject'] = self.subject
         self.msg = msg
         acnt = self.acnts[self.sel.get()]
         try:
@@ -68,7 +71,7 @@ class SendMail(object):
             server.ehlo()
             server.login(acnt[0], acnt[1])
             recipent = self.recipent
-            server.sendmail(acnt[0], recipent, self.msg)
+            server.sendmail(acnt[0], recipent, msg.as_string())
             server.quit()
         except:
             self.msg_fail
@@ -77,6 +80,7 @@ class SendMail(object):
         last_line = self.msg_input.index(END)
         self.msg = self.msg_input.get('1.0', last_line)
         self.recipent = self.to.get()
+        self.subject = self.subject_entry.get()
         self.mail_session(self.msg)
 
     def cancel(self):
@@ -98,8 +102,8 @@ class SendMail(object):
         self.to.grid(row=0, columnspan=2, sticky=W+E, padx=70)
         self.to_label = Label(self.root, text='To:')
         self.to_label.grid(row=0, sticky=W, padx=10)
-        self.subject = Entry(self.root)
-        self.subject.grid(row=1, columnspan=2, sticky=W+E, padx=70, pady=10)
+        self.subject_entry = Entry(self.root)
+        self.subject_entry.grid(row=1, columnspan=2, sticky=W+E, padx=70, pady=10)
         self.subject_label = Label(self.root, text='Subject:')
         self.subject_label.grid(row=1, sticky=W, padx=10)
         self.ok_button = Button(self.root, text="ok", command=self.ok_send)
@@ -115,23 +119,29 @@ class SendMail(object):
     def no_saved_acnts(self):
         self.root = Tk()
         self.root.geometry("275x150+400+275")
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
         message = Message(self.root, text="No Saved Accounts",
                           bd=4, justify='center', relief='raised')
-        message.pack(fill='both', expand=1)
-        close_button = Button(message, text='close', height=1, 
+        message.grid(row=0, column=0, columnspan=2, 
+                     rowspan=2, sticky=S+N+E+W)
+        close_button = Button(self.root, text='close', height=1, 
                               command=self.cancel, relief='groove')
-        close_button.pack(side=BOTTOM, pady=20)
+        close_button.grid(row=1, column=1, sticky=S, pady=10, padx=110)
         self.root.mainloop()
 
     @property
     def msg_fail(self):
         self.fail_root = Tk()
         self.fail_root.geometry("275x150+400+275")
+        self.fail_root.grid_rowconfigure(0, weight=1)
+        self.fail_root.grid_columnconfigure(0, weight=1)
         message = Message(self.fail_root, text="Message Failed!",
                           bd=4, justify='center', relief='raised')
-        message.pack(fill='both', expand=1)
-        close_button = Button(message, text='close', height=1,
+        message.grid(row=0, column=0, columnspan=2,
+                        rowspan=2, sticky=S+N+E+W)
+        close_button = Button(self.fail_root, text='close', height=1,
                               command=self.msg_fail_cancel, relief='groove')
-        close_button.pack(side=BOTTOM, pady=20)
+        close_button.grid(row=1, column=1, sticky=S, pady=10, padx=110)
         self.fail_root.mainloop()
 
