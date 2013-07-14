@@ -34,9 +34,9 @@ class SendMail(object):
             if stored_acnts:
                 self.choice_window(stored_acnts)
             else:
-                self.no_saved_acnts
+                self.msg_win('none_saved')
         else:
-            self.no_saved_acnts
+            self.msg_win('none_saved')
             
     def choice_window(self, acnts):
         self.root = Tk()
@@ -76,11 +76,12 @@ class SendMail(object):
             server.sendmail(acnt[0], recipent, msg.as_string())
             server.quit()
         except:
-            self.msg_fail
+            self.msg_win('fail')
+            return
         self.msg_input.delete('0.0', END)
         self.to.delete(0, END)
         self.subject_entry.delete(0, END)
-        self.msg_sent
+        self.msg_win('sent')
 
     def save_message(self):
         with open(os.getcwd() + '/.sent_mail', 'a') as f:
@@ -99,12 +100,9 @@ class SendMail(object):
     def cancel(self):
         self.root.destroy()
 
-    def sent_close(self):
-        self.sent_msg.destroy()
+    def msg_win_close(self):
+        self.msg_win_root.destroy()
 
-    def msg_fail_cancel(self):
-        self.fail_root.destroy()
-        
     def msg_window(self):
         self.cancel()
         self.root = Tk()
@@ -128,52 +126,26 @@ class SendMail(object):
         self.ok_button.grid(row=4, sticky=S+W, padx=10, pady=10)
         self.cancel_button = Button(self.root, text="close", 
                                           command=self.cancel)
-
         self.cancel_button.grid(row=4, column=1, sticky=S+E, padx=10, pady=10)
         self.to.focus_set()
         self.root.mainloop()
 
-    @property
-    def no_saved_acnts(self):
-        self.root = Tk()
-        self.root.geometry("275x150+400+275")
-        self.root.grid_rowconfigure(0, weight=1)
-        self.root.grid_columnconfigure(0, weight=1)
-        message = Message(self.root, text="No Saved Accounts",
+    def msg_win(self, alert):
+        self.msg_win_root = Tk()
+        self.msg_win_root.geometry("275x150+400+275")
+        self.msg_win_root.grid_rowconfigure(0, weight=1)
+        self.msg_win_root.grid_columnconfigure(0, weight=1)
+        if alert == 'none_saved':
+            text_msg = "No Saved Accounts"
+        elif alert == 'fail':
+            text_msg = "Message Failed!"
+        else:
+            text_msg = "Message Sent!"			
+        message = Message(self.msg_win_root, text=text_msg,
                           bd=4, justify='center', relief='raised')
         message.grid(row=0, column=0, columnspan=2, 
                      rowspan=2, sticky=S+N+E+W)
-        close_button = Button(self.root, text='close', height=1, 
-                              command=self.cancel, relief='groove')
+        close_button = Button(self.msg_win_root, text='close', height=1, 
+                              command=self.msg_win_close, relief='groove')
         close_button.grid(row=1, column=1, sticky=S, pady=10, padx=110)
-        self.root.mainloop()
-
-    @property
-    def msg_sent(self):
-        self.sent_msg = Tk()
-        self.sent_msg.geometry("275x150+400+275")
-        self.sent_msg.grid_rowconfigure(0, weight=1)
-        self.sent_msg.grid_columnconfigure(0, weight=1)
-        message = Message(self.sent_msg, text="Message Sent!",
-                          bd=4, justify='center', relief='raised')
-        message.grid(row=0, column=0, columnspan=2,
-                        rowspan=2, sticky=S+N+E+W)
-        close_button = Button(self.sent_msg, text='close', height=1,
-                                command=self.sent_close, relief='groove')
-        close_button.grid(row=1, column=1, sticky=S, pady=10, padx=10)
-        self.sent_msg.mainloop()
-
-    @property
-    def msg_fail(self):
-        self.fail_root = Tk()
-        self.fail_root.geometry("275x150+400+275")
-        self.fail_root.grid_rowconfigure(0, weight=1)
-        self.fail_root.grid_columnconfigure(0, weight=1)
-        message = Message(self.fail_root, text="Message Failed!",
-                          bd=4, justify='center', relief='raised')
-        message.grid(row=0, column=0, columnspan=2,
-                        rowspan=2, sticky=S+N+E+W)
-        close_button = Button(self.fail_root, text='close', height=1,
-                              command=self.msg_fail_cancel, relief='groove')
-        close_button.grid(row=1, column=1, sticky=S, pady=10, padx=110)
-        self.fail_root.mainloop()
+        self.msg_win_root.mainloop()
