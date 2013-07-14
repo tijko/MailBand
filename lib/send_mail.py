@@ -4,6 +4,7 @@
 from Tkinter import *
 from email.mime.text import MIMEText
 import os
+import time
 import smtplib
 import simplejson
 
@@ -57,10 +58,11 @@ class SendMail(object):
         cancel_button.grid(row=v + 2, column=1, sticky=S+E, padx=25, pady=10)
         self.root.mainloop()
         
-    def mail_session(self, msg):
-        msg = MIMEText(msg)
+    def mail_session(self):
+        if self.save.get():
+            self.save_message()
+        msg = MIMEText(self.msg)
         msg['Subject'] = self.subject
-        self.msg = msg
         acnt = self.acnts[self.sel.get()]
         try:
             addr = acnt[0].split('@')[1]
@@ -75,25 +77,38 @@ class SendMail(object):
             server.quit()
         except:
             self.msg_fail
+        self.msg_input.delete('0.0', END)
+        self.to.delete(0, END)
+        self.subject_entry.delete(0, END)
+        self.msg_sent
+
+    def save_message(self):
+        with open(os.getcwd() + '/.sent_mail', 'a') as f:
+            f.write("=" * 5 + (' %s ' % time.ctime()) + "=" * 5 + '\n')
+            f.write("To: %s\n" % self.recipent)
+            f.write("Subject: %s\n" % self.subject)
+            f.write(self.msg + '\n')
 
     def ok_send(self):
         last_line = self.msg_input.index(END)
         self.msg = self.msg_input.get('1.0', last_line)
         self.recipent = self.to.get()
         self.subject = self.subject_entry.get()
-        self.mail_session(self.msg)
+        self.mail_session()
 
     def cancel(self):
         self.root.destroy()
 
+    def sent_close(self):
+        self.sent_msg.destroy()
+
     def msg_fail_cancel(self):
         self.fail_root.destroy()
-        self.cancel()
         
     def msg_window(self):
         self.cancel()
         self.root = Tk()
-        self.root.geometry("500x475+400+275")
+        self.root.geometry("500x525+400+75")
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_columnconfigure(0, weight=1)
         self.msg_input = Text(self.root, wrap=WORD) 
@@ -106,13 +121,16 @@ class SendMail(object):
         self.subject_entry.grid(row=1, columnspan=2, sticky=W+E, padx=70, pady=10)
         self.subject_label = Label(self.root, text='Subject:')
         self.subject_label.grid(row=1, sticky=W, padx=10)
+        self.save = IntVar()
+        self.save_mail = Checkbutton(self.root, text='Save Email', variable=self.save)
+        self.save_mail.grid(row=3, sticky=W, padx=10, pady=10)
         self.ok_button = Button(self.root, text="ok", command=self.ok_send)
-        self.ok_button.grid(row=3, sticky=S+W, padx=10, pady=10)
-        self.cancel_button = Button(self.root, text="cancel", 
+        self.ok_button.grid(row=4, sticky=S+W, padx=10, pady=10)
+        self.cancel_button = Button(self.root, text="close", 
                                           command=self.cancel)
 
-        self.cancel_button.grid(row=3, column=1, sticky=S+E, padx=10, pady=10)
-        self.msg_input.focus_set()
+        self.cancel_button.grid(row=4, column=1, sticky=S+E, padx=10, pady=10)
+        self.to.focus_set()
         self.root.mainloop()
 
     @property
@@ -131,6 +149,21 @@ class SendMail(object):
         self.root.mainloop()
 
     @property
+    def msg_sent(self):
+        self.sent_msg = Tk()
+        self.sent_msg.geometry("275x150+400+275")
+        self.sent_msg.grid_rowconfigure(0, weight=1)
+        self.sent_msg.grid_columnconfigure(0, weight=1)
+        message = Message(self.sent_msg, text="Message Sent!",
+                          bd=4, justify='center', relief='raised')
+        message.grid(row=0, column=0, columnspan=2,
+                        rowspan=2, sticky=S+N+E+W)
+        close_button = Button(self.sent_msg, text='close', height=1,
+                                command=self.sent_close, relief='groove')
+        close_button.grid(row=1, column=1, sticky=S, pady=10, padx=10)
+        self.sent_msg.mainloop()
+
+    @property
     def msg_fail(self):
         self.fail_root = Tk()
         self.fail_root.geometry("275x150+400+275")
@@ -144,4 +177,3 @@ class SendMail(object):
                               command=self.msg_fail_cancel, relief='groove')
         close_button.grid(row=1, column=1, sticky=S, pady=10, padx=110)
         self.fail_root.mainloop()
-
