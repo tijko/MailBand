@@ -66,7 +66,7 @@ def save_local(session, account, selection):
                 account = email_data['To']
                 title = email_data['Subject']
                 for part in email_data.walk():
-                    if email_data.get_content_type() == 'text/plain':
+                    if part.get_content_type() == 'text/plain':
                         load = part.get_payload()
                         cur.execute("INSERT INTO Email VALUES(?,?,?)", (account,
                                                                         title,
@@ -109,13 +109,6 @@ def delete_account_mail(session, selection):
                 print '\nBad Selection! --> %s\n' % msg
                 pass
     return
-
-def title_parse(title):
-    title = title.replace('MIME-Version: 1.0', '')
-    title = title.replace('In-Reply-To:', '')
-    title = title.replace('Message-ID:', '')
-    # reference rm?
-    return title
 
 def create_database():
     con = sqlite3.connect(os.environ['HOME'] + '/.mailband.db')
