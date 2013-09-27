@@ -5,7 +5,7 @@ import poplib
 import smtplib
 import sqlite3
 import os
-from BeautifulSoup import BeautifulSoup
+import email
 
 
 _pop_addr = {'gmail.com':'pop.gmail.com',
@@ -32,16 +32,10 @@ def deliver(address, action):
             print 'Emails %d for: %s' % (session.stat()[0], addr[0])
             if session.stat()[0] > 0:
                 for i in xrange(1, session.stat()[0] + 1):
-                    email = session.top(i, 30000)[1]   
-                    soup = BeautifulSoup(' '.join(email))
-                    msg = soup.text
-                    front = msg.find('From: ')
-                    back = msg.find('Content-Type:')
-                    if back == -1 or back < front or back > front + 101:
-                        back = front + 100
-                    title = title_parse(msg[front:back])
-                    if title:
-                        print '\n[%d]    %s' % (i, title)
+                    email_data = email.message_from_string('\n'.join(session.retr(i)[1]))   
+                    sender = email_data['From']                     
+                    if sender:
+                        print '\n[%d]    %s' % (i, sender)
                     else:
                         pass
                 selection = raw_input('\nSelect your e-mail numbers: ')
@@ -63,40 +57,40 @@ def save_local(session, account, selection):
         create_database()
     con = sqlite3.connect(os.environ['HOME'] + '/.mailband.db')
     with con:
-        for email in selection:
+        for msg in selection:
             try:
                 cur = con.cursor()
                 cur.execute("SELECT * FROM Email")
-                mail = session.top(email, 10000)[1]
-                soup = BeautifulSoup(' '.join(mail))
-                msg = soup.text
-                front = msg.find('From: ')
-                back = msg.find('Content-Type:')
-                if back == -1 or back < front or back > front + 101:
-                    back = front + 100
-                title = title_parse(msg[front:back])
-                email_body = session.retr(email)[1]
-                email_body = ' '.join(email_body)
-                cur.execute("INSERT INTO Email VALUES(?,?,?)", (account,
-                                                                title,
-                                                                email_body))
-                print '\nMessage %s saved!' % title 
+                email_data = session.retr(msg)[1]
+                email_data = email.message_from_string('\n'.join(email_data))
+                account = email_data['To']
+                title = email_data['Subject']
+                for part in email_data.walk():
+                    if email_data.get_content_type() == 'text/plain':
+                        load = part.get_payload()
+                        cur.execute("INSERT INTO Email VALUES(?,?,?)", (account,
+                                                                        title,
+                                                                        load))
+                        print '\nMessage %s saved!' % title 
             except poplib.error_proto:
-                print '\nBad Selection! --> %s\n' % email
+                print '\nBad Selection! --> %s\n' % msg
                 pass 
     con.commit()
     con.close()
     return                
 
 def read_account_mail(session, selection):
-    for email in selection:
+    for msg in selection:
         try:
-            email_body = session.retr(email)
-            soup = BeautifulSoup(' '.join(email_body[1]))
-            print "Message [%s]\n" % email
-            print soup.text + '\n'
+            email_data = session.retr(msg)
+            email_data = email.message_from_string('\n'.join(email_data[1]))
+            print "Message [%s]\n" % email_data['Subject']
+            for part in email_data.walk():
+                if part.get_content_type() == 'text/plain':
+                    for line in part.get_payload().split('\n'):
+                        print line
         except poplib.error_proto:
-            print '\nBad Selection! --> %s\n' % email
+            print '\nBad Selection! --> %s\n' % msg
             pass
     return
 
@@ -107,12 +101,12 @@ def delete_account_mail(session, selection):
         if answer.lower() == 'y' or answer.lower() == 'n':
             break
     if answer.lower() == 'y':
-        for email in selection:
+        for msg in selection:
             try:
-                session.dele(email)
+                session.dele(msg)
                 print '\nMessage Deleted!\n'
             except poplib.error_proto:
-                print '\nBad Selection! --> %s\n' % email
+                print '\nBad Selection! --> %s\n' % msg
                 pass
     return
 
