@@ -16,6 +16,22 @@ _pop_addr = {'gmail.com':'pop.gmail.com',
             }
 
 
+def build_messages(session, total_messages):
+    inbox = dict()
+    for message in xrange(1, total_messages + 1):
+        raw_data = session.retr(message)[1]
+        raw_email = '\n'.join(raw_data)
+        email_data = email.message_from_string(raw_email)
+        sender = email_data['From']
+        subject = email_data['Subject']
+        body = ''
+        for part in email_data.walk():
+            if part.get_content_type() == 'text/plain':
+                body = part.get_payload()
+        inbox[sender] = {subject:body}
+    return inbox
+        
+
 def deliver(address, action): 
     for addr in address:
         accnt_name, server_suffix = addr[0].split('@')
@@ -27,75 +43,63 @@ def deliver(address, action):
                 session.pass_(addr[1])
             else:
                 session.user(addr[0])
-                session.pass_(addr[1])            
-            # give option of, say 10 newest or 10 oldest?
-            print 'Emails %d for: %s' % (session.stat()[0], addr[0])
-            if session.stat()[0] > 0:
-                for i in xrange(1, session.stat()[0] + 1):
-                    email_data = email.message_from_string('\n'.join(session.retr(i)[1]))   
-                    sender = email_data['From']                     
-                    if sender:
-                        print '\n[%d]    %s' % (i, sender)
-                    else:
-                        pass
+                session.pass_(addr[1])   
+            total_messages = session.stat()[0]         
+            print 'Emails %d for: %s' % (total_messages, addr[0])
+            if total_messages:
+                messages = build_messages(session, total_messages)
+                tagged_messages = list(enumerate(messages, 1))
+                for msg_num, sender in tagged_messages:
+                    print '\n[%d]    %s' % (msg_num, sender)
                 selection = raw_input('\nSelect your e-mail numbers: ')
-                # check if all are numbers
-                if action == 'write':
-                    save_local(session, addr[0], selection.split(','))
-                if action == 'read':
-                    read_account_mail(session, selection.split(','))
-                if action == 'delete':
-                    delete_account_mail(session, selection.split(','))
+                mail_selection = dict()
+                for choice in selection.split(','):
+                    if (choice.isdigit() and 
+                        any(i[0] == int(choice) for i in tagged_messages)):
+                        for msg in tagged_messages:
+                            if msg[0] == int(choice):
+                                mail_selection[msg[1]] = messages[msg[1]]
+                                break
+                if mail_selection:
+                    if action == 'write':
+                        save_local(addr[0], mail_selection)
+                    elif action == 'read':
+                        read_account_mail(mail_selection)
+                    elif action == 'delete':
+                        delete_account_mail(session, mail_selection) #XXX tagged_messsages
                 session.quit()                               
         except poplib.error_proto:
             print '\nUsername or Password Error ==> %s\n' % addr[0]
             pass
     return
 
-def save_local(session, account, selection):
+def save_local(account, selection):
     if not os.path.isfile(os.environ['HOME'] + '/.mailband.db'):
         create_database()
     con = sqlite3.connect(os.environ['HOME'] + '/.mailband.db')
     with con:
         for msg in selection:
-            try:
+            for title in selection[msg]:
                 cur = con.cursor()
                 cur.execute("SELECT * FROM Email")
-                email_data = session.retr(msg)[1]
-                email_data = email.message_from_string('\n'.join(email_data))
-                account = email_data['To']
-                title = email_data['Subject']
-                for part in email_data.walk():
-                    if part.get_content_type() == 'text/plain':
-                        load = part.get_payload()
-                        cur.execute("INSERT INTO Email VALUES(?,?,?)", (account,
-                                                                        title,
-                                                                        load))
-                        print '\nMessage %s saved!' % title 
-            except poplib.error_proto:
-                print '\nBad Selection! --> %s\n' % msg
-                pass 
+                load = selection[msg][title]                            
+                cur.execute("INSERT INTO Email VALUES(?,?,?)", (account,
+                                                                title,
+                                                                load))
+            print '\nMessage %s saved!' % title 
     con.commit()
     con.close()
     return                
 
-def read_account_mail(session, selection):
+def read_account_mail(selection):
     for msg in selection:
-        try:
-            email_data = session.retr(msg)
-            email_data = email.message_from_string('\n'.join(email_data[1]))
-            print "Message [%s]\n" % email_data['Subject']
-            for part in email_data.walk():
-                if part.get_content_type() == 'text/plain':
-                    for line in part.get_payload().split('\n'):
-                        print line
-        except poplib.error_proto:
-            print '\nBad Selection! --> %s\n' % msg
-            pass
+        for subject in selection[msg]:
+            print "Message [%s]\n" % subject
+            print selection[msg][subject]
     return
 
 def delete_account_mail(session, selection):
-    print "\nAre you sure you want to DELETE messages ==> %s" % (str(selection))
+    print "\nAre you sure you want to DELETE messages ==> %s" % str(selection)
     while True:
         answer = raw_input("(y or n): ") 
         if answer.lower() == 'y' or answer.lower() == 'n':
@@ -106,7 +110,7 @@ def delete_account_mail(session, selection):
                 session.dele(msg)
                 print '\nMessage Deleted!\n'
             except poplib.error_proto:
-                print '\nBad Selection! --> %s\n' % msg
+                print '\nBad Selection! --> %d\n' % msg
                 pass
     return
 
