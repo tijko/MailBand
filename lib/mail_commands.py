@@ -131,6 +131,4 @@ class Mail_Pool(object):
                     for email in email_list:
                         if str(email[0]) in delete_choice.split(','):
                             cur.execute('DELETE FROM Email WHERE email_title=?', [email[1]])
-        con.commit()
-        con.close()                
         return
