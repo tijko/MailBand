@@ -87,8 +87,6 @@ def save_local(account, selection):
                                                                 title,
                                                                 load))
             print '\nMessage %s saved!' % title 
-    con.commit()
-    con.close()
     return                
 
 def read_account_mail(selection):
@@ -121,7 +119,5 @@ def create_database():
         cur.execute("""CREATE TABLE IF NOT EXISTS Email(email_account TEXT,
                                                         email_title TEXT, 
                                                         email_text TEXT)""")
-    con.commit()
-    con.close()
     os.chmod(os.environ['HOME'] + '/.mailband.db', 111)
     return
